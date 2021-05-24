@@ -1,1 +1,2 @@
-# the-fifth-symfony
+# symfony-app
+Experimental Symfony App
