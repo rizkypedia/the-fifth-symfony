@@ -11,7 +11,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class HomepageController
 {
     /**
-     * @Route("/home")
+     * @Route("/home",name="home")
      *
      */
     public function homepage(){
