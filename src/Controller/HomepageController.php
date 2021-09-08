@@ -19,13 +19,6 @@ class HomepageController
     }
 
     /**
-     * @Route("/questions/{slug}")
-     */
-    public function show($slug){
-        return new Response("Your slug Parameter:" . $slug);
-    }
-
-    /**
      *
      * @Route("/sample")
      *
