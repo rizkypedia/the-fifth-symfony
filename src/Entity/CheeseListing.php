@@ -4,12 +4,26 @@ namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
 use App\Repository\CheeseListingRepository;
+use Carbon\Carbon;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
+
 
 /**
+ * @ApiResource(
+ *      collectionOperations={"get","post"},
+ *      itemOperations={
+ *          "get"={},
+ *          "put"
+ *      },
+ *      normalizationContext={"groups"={"cheese_listing:read"},"swagger_definition_name"="Read"},
+ *      denormalizationContext={"groups"={"cheese_listing:write"},"swagger_definition_name"="Write"},
+ *      shortName="cheeses"
+ * )
+ * 
  * @ORM\Entity(repositoryClass=CheeseListingRepository::class)
  */
-#[ApiResource]
+
 class CheeseListing
 {
     /**
@@ -21,16 +35,19 @@ class CheeseListing
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"cheese_listing:read","cheese_listing:write"})
      */
     private $title;
 
     /**
      * @ORM\Column(type="text")
+     * @Groups({"cheese_listing:read"})
      */
     private $description;
 
     /**
      * @ORM\Column(type="integer")
+     * @Groups({"cheese_listing:read","cheese_listing:write"})
      */
     private $price;
 
@@ -42,7 +59,12 @@ class CheeseListing
     /**
      * @ORM\Column(type="boolean")
      */
-    private $isPublished;
+    private $isPublished=false;
+
+    public function __construct()
+    {
+        $this->createdAt = new \DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {
@@ -73,6 +95,18 @@ class CheeseListing
         return $this;
     }
 
+     /**
+     * The description of the cheese as raw text.
+     *
+     * @Groups({"cheese_listing:write"})
+     * 
+     */
+    public function setTextDescription(string $description): self
+    {
+        $this->description = nl2br($description);
+
+        return $this;
+    }
     public function getPrice(): ?int
     {
         return $this->price;
@@ -90,11 +124,12 @@ class CheeseListing
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    /**
+     * @Groups("cheese_listing:read")
+     */
+    public function getCreatedAtAgo(): string
     {
-        $this->createdAt = $createdAt;
-
-        return $this;
+       return Carbon::instance($this->getCreatedAt())->diffForHumans();
     }
 
     public function getIsPublished(): ?bool
