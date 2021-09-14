@@ -5,12 +5,16 @@ namespace App\Entity;
 use ApiPlatform\Core\Annotation\ApiFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\BooleanFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\RangeFilter;
+use ApiPlatform\Core\Bridge\Symfony\Validator\Validator;
+use ApiPlatform\Core\Serializer\Filter\PropertyFilter;
 use ApiPlatform\Core\Annotation\ApiResource;
 use App\Repository\CheeseListingRepository;
 use Carbon\Carbon;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\SerializedName;
+use Symfony\Component\Validator\Constraints as Assert;
 
 
 /**
@@ -20,14 +24,20 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
  *          "get"={},
  *          "put"
  *      },
- *      normalizationContext={"groups"={"cheese_listing:read"},"swagger_definition_name"="Read"},
- *      denormalizationContext={"groups"={"cheese_listing:write"},"swagger_definition_name"="Write"},
- *      shortName="cheeses"
+ *      normalizationContext={"groups"={"user:read"}},
+ *      denormalizationContext={"groups"={"user:write"}},
+ *      shortName="cheeses",
+ *      attributes={
+ *          "pagination_items_per_page"=5,
+ *         
+ *      }
  * )
  * 
  * @ORM\Entity(repositoryClass=CheeseListingRepository::class)
  * @ApiFilter(BooleanFilter::class, properties={"isPublished"})
  * @ApiFilter(SearchFilter::class, properties={"title":"partial","description":"partial"})
+ * @ApiFilter(RangeFilter::class, properties={"price"})
+ * @ApiFilter(PropertyFilter::class)
  */
 
 class CheeseListing
@@ -42,18 +52,26 @@ class CheeseListing
     /**
      * @ORM\Column(type="string", length=255)
      * @Groups({"cheese_listing:read","cheese_listing:write"})
+     * @Assert\NotBlank()
+     * @Assert\Length(
+     *      min=2,
+     *      max=50,
+     *      maxMessage="Describe your cheese in 50 chars or less"
+     * )
      */
     private $title;
 
     /**
      * @ORM\Column(type="text")
      * @Groups({"cheese_listing:read"})
+     * @Assert\NotBlank()
      */
     private $description;
 
     /**
      * @ORM\Column(type="integer")
      * @Groups({"cheese_listing:read","cheese_listing:write"})
+     * @Assert\NotBlank()
      */
     private $price;
 
@@ -92,6 +110,18 @@ class CheeseListing
     public function getDescription(): ?string
     {
         return $this->description;
+    } 
+    
+    /**
+     * @Groups({"cheese_listing:read"})
+     */
+    public function getShortDescription():?string
+    {
+        if (strlen($this->description) < 40){
+            return $this->description;
+        }
+        return substr($this->description,0,40) . '...';
+
     }
 
     public function setDescription(string $description): self
